@@ -1,15 +1,19 @@
-import * as React from 'react'
-import './app.css'
+import React from 'react'
+import './App.css'
+import NoteBookList from '../components/NoteBookList'
+import Editor from '../components/Editor'
+import Preview from '../components/Preview'
+import Toolbar from '../components/Toolbar'
 
-const App: React.FC = () => {
+export default function App() {
   return (
-    <div className="w-full">
-      <div className="flex flex-col">
-        <div className="">toolbar</div>
+    <div className="w-full h-full nx-max-height">
+      <div className="flex flex-col w-full h-full">
+        <Toolbar />
         <div className="h-full w-full flex flex-row justify-stretch">
-          <div>groups</div>
-          <div>editor</div>
-          <div>preview</div>
+          <NoteBookList />
+          <Editor />
+          <Preview />
         </div>
       </div>
     </div>
@@ -17,4 +21,3 @@ const App: React.FC = () => {
 
 }
 
-export default App
