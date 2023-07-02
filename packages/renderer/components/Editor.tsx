@@ -1,7 +1,24 @@
-import React from 'react'
+import React, { useCallback, useEffect } from 'react'
+import useCodeMirror from '../hooks/useCodeMirror'
+import { EditorState } from '@codemirror/state'
 
-export default function Editor() {
-  return (
-    <div className="bg-gray-800 text-white border border-gray-500 w-1/3 p-1">editor</div>
+interface Props {
+  initialDoc: string,
+  onChange: (doc: string) => void
+}
+
+export default function Editor({ initialDoc, onChange }: Props) {
+  const handleChange = useCallback(
+    (state: EditorState) => onChange(state.doc.toString()), [onChange]
   )
+  const [ refContainer, editorView ] = useCodeMirror<HTMLDivElement>({
+    initialDoc: initialDoc,
+    onChange: handleChange
+  })
+  useEffect(() => {
+    if(editorView) {
+    } else {
+    }
+  }, [editorView])
+  return <div className="bg-gray-900 text-white border border-black w-1/3 p-1" ref={refContainer} />
 }

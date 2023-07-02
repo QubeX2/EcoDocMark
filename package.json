@@ -59,7 +59,11 @@
     "better-sqlite3": "^8.4.0",
     "codemirror": "^6.0.1",
     "electron-updater": "5.2.1",
+    "github-markdown-css": "^5.2.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-markdown": "^8.0.7",
+    "react-syntax-highlighter": "^15.5.0",
+    "remark-gfm": "^3.0.1"
   }
 }
