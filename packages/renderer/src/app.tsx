@@ -1,19 +1,17 @@
 import * as React from 'react'
-import { useState } from 'react'
 import './app.css'
 
 const App: React.FC = () => {
-  const [count, setCount] = useState(0)
   return (
-    <div className='app'>
-      <header className='app-header'>
-        <p>Vite + React + TypeScript</p>
-        <p>
-          <button onClick={() => setCount((count) => count + 1)}>
-            Count: {count}
-          </button>
-        </p>
-      </header>
+    <div className="w-full">
+      <div className="flex flex-col">
+        <div className="">toolbar</div>
+        <div className="h-full w-full flex flex-row justify-stretch">
+          <div>groups</div>
+          <div>editor</div>
+          <div>preview</div>
+        </div>
+      </div>
     </div>
   )
 

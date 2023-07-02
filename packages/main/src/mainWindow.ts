@@ -59,5 +59,6 @@ export async function restoreOrCreateWindow() {
     window.restore();
   }
 
+  window.maximize();
   window.focus();
 }

@@ -1,4 +1,4 @@
-import {app} from 'electron';
+import { app } from 'electron';
 import './security-restrictions';
 import {restoreOrCreateWindow} from '/@/mainWindow';
 
@@ -34,6 +34,7 @@ app.on('activate', restoreOrCreateWindow);
 /**
  * Create the application window when the background process is ready.
  */
+
 app
   .whenReady()
   .then(restoreOrCreateWindow)
