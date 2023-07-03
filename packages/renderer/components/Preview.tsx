@@ -1,18 +1,13 @@
-import React, { useRef, useEffect } from 'react'
-import { EcoDocMark } from '../../../modules/eco-doc-mark/eco-doc-mark'
+import React from 'react';
+import type {EcoToken} from '../../../modules/eco-doc-mark/eco-doc-mark';
+import {EcoDocMark} from '../../../modules/eco-doc-mark/eco-doc-mark';
 
 interface Props {
-  doc: string
+  doc: string;
 }
 
-export default function Preview({ doc }: Props) {
-  const refPreview = useRef<HTMLDivElement>(null);
-  doc = EcoDocMark.Parse(doc)
-  useEffect(() => {
-    if(refPreview.current) {
-      console.log(doc);
-      refPreview.current.innerHTML = doc;
-    }
-  }, [doc])
-  return <div ref={refPreview} className="bg-white text-black w-1/3 p-1" />
+export default function Preview({doc}: Props) {
+  const token: EcoToken = EcoDocMark.Parse(doc);
+  console.log(token);
+  return <div className="bg-white text-black w-1/3 p-1" />;
 }

@@ -14,7 +14,7 @@ enum EcoTokenType {
 type TypeEcoToken = EcoToken | null;
 type TypeEcoTokenValue = string | null | number;
 
-interface EcoToken {
+export interface EcoToken {
   type: EcoTokenType;
   value: TypeEcoTokenValue;
   first: TypeEcoToken;
@@ -44,7 +44,7 @@ export class EcoDocMark {
     return null;
   }
 
-  static Parse(doc: string): string {
+  static Parse(doc: string): EcoToken {
     const config = new Map<string, string>();
     // const errors = new Map<number, string>()
     const validSymbolChars = 'ABCDEFGHIJKLMNOPQRSTUVXYZ0123456789';
@@ -62,7 +62,7 @@ export class EcoDocMark {
     let i = 0;
     while (i < doc.length) {
       const c = doc.charAt(i);
-      console.log('incoming char', c);
+      // console.log('incoming char', c);
       switch (c) {
         // .config-{name}
         case '.':
@@ -175,7 +175,6 @@ export class EcoDocMark {
               }
               i--;
               if (func.length) {
-                console.log('func', func);
                 const token = EcoDocMark.CreateToken(EcoTokenType.Function, func, root, current);
                 current.children.push(token);
                 current = token;
@@ -248,14 +247,12 @@ export class EcoDocMark {
           }
           break;
       }
-      console.log('type', current ? EcoTokenType[current.type] : '');
-      console.log('exit char', doc.charAt(i));
+      // console.log('type', current ? EcoTokenType[current.type] : '');
+      // console.log('exit char', doc.charAt(i));
       i++;
     }
-    console.log('root', root);
+    // console.log('root', root);
 
-    return `
-      <div class="font-bold bg-blue-500">parsed</div>
-    `;
+    return root;
   }
 }
