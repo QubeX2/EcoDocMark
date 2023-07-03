@@ -3,7 +3,6 @@ import { useEffect, useState, useRef } from 'react'
 import { EditorState } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { defaultKeymap } from '@codemirror/commands'
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { basicSetup } from 'codemirror'
@@ -23,16 +22,11 @@ export default function useCodeMirror<T extends Element>({ initialDoc, onChange 
       extensions: [
         basicSetup,
         keymap.of(defaultKeymap),
-        markdown({
-          base: markdownLanguage,
-          codeLanguages: languages,
-          addKeymap: true,
-        }),
         oneDark,
         EditorView.lineWrapping,
         EditorView.updateListener.of(update => {
-          if(update.changes) {
-            onChange && onChange(update.state)
+          if(update.changes && onChange) {
+            onChange(update.state)
           }
         }),
       ]
