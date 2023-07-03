@@ -1,13 +1,12 @@
-import React, { useState, useCallback } from 'react'
-import './App.css'
-import NoteBookList from '../components/NoteBookList'
-import Editor from '../components/Editor'
-import Preview from '../components/Preview'
-import Toolbar from '../components/Toolbar'
+import React, {useState, useCallback} from 'react';
+import './App.css';
+import NoteBookList from '../components/NoteBookList';
+import Editor from '../components/Editor';
+import Preview from '../components/Preview';
+import Toolbar from '../components/Toolbar';
 
 export default function App() {
-  const example =
-`.currency-suffix: kr
+  const example = `.currency-suffix: kr
 
 :I #Income_ {
   [#Type #Amount]
@@ -34,24 +33,25 @@ export default function App() {
   #Google =170
   #Amazon Prime =65
   !ADD(:M)
-} `
-  const [doc, setDoc] = useState<string>(example)
+} `;
+  const [doc, setDoc] = useState<string>(example);
   // run at start
   const handleEditorChange = useCallback((doc: string) => {
-    setDoc(doc)
-  }, [])
+    setDoc(doc);
+  }, []);
   return (
     <div className="w-full h-full nx-max-height">
       <div className="flex flex-col w-full h-full">
         <Toolbar />
         <div className="h-full w-full flex flex-row justify-stretch">
           <NoteBookList />
-          <Editor onChange={handleEditorChange} initialDoc={doc} />
+          <Editor
+            onChange={handleEditorChange}
+            initialDoc={doc}
+          />
           <Preview doc={doc} />
         </div>
       </div>
     </div>
-  )
-
+  );
 }
-
