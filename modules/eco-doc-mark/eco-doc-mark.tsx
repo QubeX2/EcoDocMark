@@ -184,18 +184,18 @@ export class EcoDocMark {
           }
           break;
 
+        /*
         case '(':
           {
             if (i < doc.length && current && current.type === EcoTokenType.Function) {
             }
           }
-          break;
+          break; */
 
         case ')':
           {
             if (current && current.type === EcoTokenType.Function) {
               current = current.parent;
-              console.log('close func', current.type);
             }
           }
           break;
@@ -248,7 +248,7 @@ export class EcoDocMark {
           }
           break;
       }
-      console.log('type', EcoTokenType[current.type]);
+      console.log('type', current ? EcoTokenType[current.type] : '');
       console.log('exit char', doc.charAt(i));
       i++;
     }
