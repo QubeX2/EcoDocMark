@@ -1,6 +1,14 @@
-import {app, BrowserWindow} from 'electron';
+import {app, BrowserWindow } from 'electron';
 import {join} from 'path';
 import {URL} from 'url';
+/*
+const path = require('path')
+const os = require('os')
+
+const reactDevToolsPath = path.join(
+  os.homedir(),
+  '/Library/Application Support/Google/Chrome/Default/Extensions/fmkadmapgofadopljbjfkapdkoienihi/4.27.8_0'
+) */
 
 async function createWindow() {
   const browserWindow = new BrowserWindow({
@@ -60,5 +68,7 @@ export async function restoreOrCreateWindow() {
   }
 
   window.maximize();
+  // await session.defaultSession.loadExtension(reactDevToolsPath, { allowFileAccess: true })
+
   window.focus();
 }

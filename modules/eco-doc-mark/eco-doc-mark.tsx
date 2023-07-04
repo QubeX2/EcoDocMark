@@ -22,7 +22,20 @@ export interface EcoToken {
   children: EcoToken[]
 }
 
+export interface EcoMap {
+  key: string
+  value: string
+  children: EcoMap[]
+  parent: EcoMap | null
+}
+
 export class EcoDocMark {
+  readonly token: EcoToken
+
+  constructor(token: EcoToken) {
+    this.token = token
+  }
+
   private static CreateToken(
     type: EcoTokenType,
     value: TypeEcoTokenValue,
@@ -44,12 +57,27 @@ export class EcoDocMark {
     return null
   }
 
-  static Parse(doc: string): EcoToken {
-    const config = new Map<string, string>()
-    // const errors = new Map<number, string>()
-    const validSymbolChars = 'ABCDEFGHIJKLMNOPQRSTUVXYZ0123456789'
-    // const validNumberChars = '0123456789.'
-    const endingChars = '{#%=!\n]('
+  /**
+   *
+   */
+  private TraverseToken(token: EcoToken, map: EcoMap) {
+    for (const child of token.children) {
+      if (child.type === EcoTokenType.Function) return
+      const nmap = {
+        'key': EcoTokenType[child.type],
+        'value': child.value ? child.value.toString() : '',
+        'children': [],
+        'parent': map,
+      }
+      map.children.push(nmap)
+      this.TraverseToken(child, nmap)
+    }
+  }
+
+  /**
+   *
+   */
+  static CreateMap(doc: string): EcoMap {
     const root: EcoToken = {
       type: EcoTokenType.Root,
       value: null,
@@ -57,7 +85,30 @@ export class EcoDocMark {
       parent: null,
       children: [],
     }
-    let current: TypeEcoToken = root
+
+    const worker = new EcoDocMark(root)
+    worker.Parse(doc)
+
+    const map: EcoMap = {
+      'key': EcoTokenType[EcoTokenType.Root],
+      'value': '',
+      'children': [],
+      'parent': null,
+    }
+    worker.TraverseToken(root, map)
+    return map
+  }
+
+  /**
+   *
+   */
+  private Parse(doc: string) {
+    const config = new Map<string, string>()
+    // const errors = new Map<number, string>()
+    const validSymbolChars = 'ABCDEFGHIJKLMNOPQRSTUVXYZ0123456789'
+    // const validNumberChars = '0123456789.'
+    const endingChars = '{\'%=!\n]('
+    let current: TypeEcoToken = this.token
 
     let i = 0
     while (i < doc.length) {
@@ -83,6 +134,9 @@ export class EcoDocMark {
         // @TAB
         case '@':
           {
+            if (current && current.type === EcoTokenType.Tab) {
+              current = current.parent
+            }
             if (current && current.type === EcoTokenType.Root) {
               let tab = ''
               while (i++ < doc.length && !endingChars.includes(doc.charAt(i))) {
@@ -90,7 +144,9 @@ export class EcoDocMark {
               }
               i--
               if (tab.length && current) {
-                current.children.push(EcoDocMark.CreateToken(EcoTokenType.Tab, tab, root, current))
+                const token = EcoDocMark.CreateToken(EcoTokenType.Tab, tab, this.token, current)
+                current.children.push(token)
+                current = token
               }
             }
           }
@@ -99,26 +155,25 @@ export class EcoDocMark {
         // :SYMBOL
         case ':':
           {
-            if (current) {
-              let symbol = ''
-              while (i++ < doc.length && validSymbolChars.includes(doc.charAt(i))) {
-                symbol += doc.charAt(i)
-              }
-              i--
-              if (symbol.length) {
-                if (current.type === EcoTokenType.Root) {
-                  current = EcoDocMark.CreateToken(
-                    EcoTokenType.Symbol,
-                    symbol,
-                    root,
-                    current === null ? root : current,
-                  )
-                  root.children.push(current)
-                } else {
-                  current.children.push(
-                    EcoDocMark.CreateToken(EcoTokenType.Symbol, symbol, root, current),
-                  )
-                }
+            let symbol = ''
+            while (i++ < doc.length && validSymbolChars.includes(doc.charAt(i))) {
+              symbol += doc.charAt(i)
+            }
+            i--
+            if (symbol.length) {
+              if (current && (current.type === EcoTokenType.Root || current.type === EcoTokenType.Tab)) {
+                const token = EcoDocMark.CreateToken(
+                  EcoTokenType.Symbol,
+                  symbol,
+                  this.token,
+                  current === null ? this.token : current,
+                )
+                current.children.push(token)
+                current = token
+              } else if (current) {
+                current.children.push(
+                  EcoDocMark.CreateToken(EcoTokenType.Symbol, symbol, this.token, current),
+                )
               }
             }
           }
@@ -145,17 +200,17 @@ export class EcoDocMark {
                 ].includes(current.type)
               ) {
                 if (current.type === EcoTokenType.List) {
-                  const token = EcoDocMark.CreateToken(EcoTokenType.ListRow, null, root, current)
+                  const token = EcoDocMark.CreateToken(EcoTokenType.ListRow, null, this.token, current)
                   current.children.push(token)
                   current = token
                 }
                 let token: TypeEcoToken = null
                 if (c === '%') {
-                  token = EcoDocMark.CreateToken(EcoTokenType.Date, text, root, current)
+                  token = EcoDocMark.CreateToken(EcoTokenType.Date, text, this.token, current)
                 } else if (c === '\'') {
-                  token = EcoDocMark.CreateToken(EcoTokenType.Text, text, root, current)
+                  token = EcoDocMark.CreateToken(EcoTokenType.Text, text, this.token, current)
                 } else {
-                  token = EcoDocMark.CreateToken(EcoTokenType.Number, text, root, current)
+                  token = EcoDocMark.CreateToken(EcoTokenType.Number, text, this.token, current)
                 }
 
                 if (token) {
@@ -175,7 +230,7 @@ export class EcoDocMark {
               }
               i--
               if (func.length) {
-                const token = EcoDocMark.CreateToken(EcoTokenType.Function, func, root, current)
+                const token = EcoDocMark.CreateToken(EcoTokenType.Function, func, this.token, current)
                 current.children.push(token)
                 current = token
               }
@@ -203,7 +258,7 @@ export class EcoDocMark {
         case '{':
           {
             if (current && current.type === EcoTokenType.Symbol) {
-              const token = EcoDocMark.CreateToken(EcoTokenType.List, null, root, current)
+              const token = EcoDocMark.CreateToken(EcoTokenType.List, null, this.token, current)
               current.children.push(token)
               current = token
             }
@@ -214,7 +269,11 @@ export class EcoDocMark {
         case '}':
           {
             if (current && current.type === EcoTokenType.List) {
-              current = EcoDocMark.Closest(current, EcoTokenType.Root)
+              let token = EcoDocMark.Closest(current, EcoTokenType.Tab)
+              if (!token) {
+                token = EcoDocMark.Closest(current, EcoTokenType.Root)
+              }
+              current = token
             }
           }
           break
@@ -231,7 +290,7 @@ export class EcoDocMark {
         case '[':
           {
             if (current && current.type === EcoTokenType.List) {
-              const token = EcoDocMark.CreateToken(EcoTokenType.ListHeader, null, root, current)
+              const token = EcoDocMark.CreateToken(EcoTokenType.ListHeader, null, this.token, current)
               current.children.push(token)
               current = token
             }
@@ -251,8 +310,6 @@ export class EcoDocMark {
       // console.log('exit char', doc.charAt(i))
       i++
     }
-    // console.log('root', root)
-
-    return root
+    console.log(this.token)
   }
 }
