@@ -20,5 +20,5 @@ export default function Editor({ initialDoc, onChange }: Props) {
     } else {
     }
   }, [editorView])
-  return <div className="bg-gray-900 text-white border border-black w-1/3 p-1" ref={refContainer} />
+  return <div className="bg-gray-900 text-white border border-black w-2/6 p-1" ref={refContainer} />
 }

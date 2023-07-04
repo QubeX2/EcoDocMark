@@ -8,14 +8,14 @@ import Toolbar from '../components/Toolbar'
 export default function App() {
   const example = `.currency-suffix: kr
 
-:I 'Income_ {
+:I 'Income {
   ['Type 'Amount]
   'Income =25500
   'Pension =3650
   !ADD(:I)
 }
 
-:E 'Expenses_ {
+:E 'Expenses {
   ['Type 'Amount]
   'Personal Trainer =1600
   'Rent =4500
@@ -27,13 +27,13 @@ export default function App() {
 :S 'Saldo_ !SUB(!ADD(:I),!ADD(:E))_
 
 @Montly Expenses
-:M 'Monthly_ {
+:M 'Monthly {
   ['Type 'Amount]
   'Netflix =99
   'Google =170
   'Amazon Prime =65
   !ADD(:M)
-} `
+}`
   const [doc, setDoc] = useState<string>(example)
   // run at start
   const handleEditorChange = useCallback((doc: string) => {
