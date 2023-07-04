@@ -1,6 +1,6 @@
 {
-  "name": "vite-electron-builder",
-  "description": "Secure boilerplate for Electron app based on Vite",
+  "name": "EcoDocMar",
+  "description": "Financial Scripting",
   "private": true,
   "author": {
     "email": "qubex2@gmail.com",
