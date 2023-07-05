@@ -12,7 +12,6 @@ if (process.env.VITE_APP_VERSION === undefined) {
 const config = {
   directories: {
     output: 'dist',
-    buildResources: 'buildResources',
   },
   files: ['packages/**/dist/**'],
   extraMetadata: {
