@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { EcoDocMark } from '../../../modules/eco-doc-mark/eco-doc-mark'
 import Document from '../components/preview/Document'
+import TabList from './preview/TabList'
+import Page from './preview/Page'
+import PageSection from './preview/PageSection'
+import PageSectionItem from './preview/PageSectionItem'
 
 interface Props {
   doc: string
 }
 
 export interface SymbolObj {
+  id: string
   type: string
   items?: string[]
   title?: string
@@ -21,30 +26,29 @@ export interface Section {
 }
 
 export default function Preview({ doc }: Props) {
-  const [tabs, setTabs] = useState<string[]>([])
-  const [sections, setSections] = useState<Section[]>([])
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0)
 
   const handleTabClick = useCallback((index: number) => {
     setSelectedTabIndex(index)
   }, [])
 
-  useEffect(() => {
+const { sections, tabs } =  useMemo(() => {
     const m = EcoDocMark.CreateMap(doc)
     console.log(m)
     const tabItems = m.children.filter(x => x.key === 'Tab')
     let tabIndex = 0
-    const tabNames = [...(m.children.length > 1 && m.children[0].key !== 'Tab' ? [''] : []), ...tabItems.map(t => t.value)]
+    const tabs = [...(m.children.length > 1 && m.children[0].key !== 'Tab' ? [''] : []), ...tabItems.map(t => t.value)]
     let currentTab = ''
-    const ps: Section[] = [] // pages
+    const sections: Section[] = [] // pages
 
     const cs = [m, ...tabItems]
+    let unId = 1;
     let pageIndex = 0
     for (const c of cs) {
       const symbols = c.children.filter(x => x.key === 'Symbol')
       if (symbols.length) {
         for (const symbol of symbols) {
-          if(symbol.parent && symbol.parent.key === 'Tab' && currentTab !== symbol.parent.value) {
+          if (symbol.parent && symbol.parent.key === 'Tab' && currentTab !== symbol.parent.value) {
             currentTab = symbol.parent.value
             tabIndex++
           }
@@ -56,7 +60,8 @@ export default function Preview({ doc }: Props) {
           const ls = symbol.children.find(w => w.key === 'List')
           if (ls) {
             const tv = symbol.children.find(w => w.key === 'Text')?.value
-            const sl:SymbolObj = {
+            const sl: SymbolObj = {
+              id: `id-symbol-${unId++}`,
               type: 'SymbolList',
               title: tv ? tv : '',
               headers: [],
@@ -71,22 +76,36 @@ export default function Preview({ doc }: Props) {
             }
             pg.symbols.push(sl)
           } else {
-            const s:SymbolObj = {
+            const s: SymbolObj = {
+              id: `id-symbol-${unId++}`,
               type: 'SymbolItem',
               items: symbol.children.map(x => x.value)
             }
             pg.symbols.push(s)
           }
           pageIndex++
-          ps.push(pg)
+          sections.push(pg)
         }
       }
     }
-    setTabs(tabNames)
-    setSections(ps)
+    console.log(sections)
+    return { sections, tabs }
   }, [doc])
 
   return (
-    <Document tabs={tabs} sections={sections} selectedIndex={selectedTabIndex} onChange={handleTabClick} />
+    <Document>
+      <TabList tabs={tabs} selectedIndex={selectedTabIndex} onChange={handleTabClick} />
+      {Array.from({ length: tabs.length }, (_, i) => i).map(x => (
+        <Page key={`id-page-${x}`} selected={x === selectedTabIndex}>
+          {sections.filter(t => t.tabIndex === x).map((s) => (
+            <PageSection key={s.id}>
+              {s.symbols.map((sy) => (
+                <PageSectionItem key={sy.id} symbol={sy} />
+              ))}
+            </PageSection>
+          ))}
+        </Page>
+      ))}
+    </Document>
   )
 }

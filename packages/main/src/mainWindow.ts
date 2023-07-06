@@ -67,7 +67,7 @@ export async function restoreOrCreateWindow() {
     window.restore();
   }
 
-  window.maximize();
+  // window.maximize();
   // await session.defaultSession.loadExtension(reactDevToolsPath, { allowFileAccess: true })
 
   window.focus();
