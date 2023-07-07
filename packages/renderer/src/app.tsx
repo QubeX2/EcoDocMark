@@ -9,31 +9,30 @@ export default function App() {
   const example = `
 .currency-suffix: kr
 
-INC_LIST: Income
+I: Income
   Type    | Amount
   Income  | 2500
   Pension | 3650
-  Sum     | !INC_SUM:SUM(INC_LIST)
+  Sum   | !IS:SUM(I)
 
-EXP_LIST: Expenses
+E: Expenses
   Type | Amount
   PT | 1600
   Rent | 4500
   Car Loan | 1900
-  Montly | !VAL(MONTH_SUM)
-  Sum | !EXP_SUM:SUM(EXP_LIST)
+  Montly | !VAL(MS)
+  Sum | !ES:SUM(E)
 
-SALDO: Saldo | !SUB(!VAL(INC_SUM) | !VAL(EXP_SUM))
+S: Saldo | !SUB(!VAL(IS), !VAL(ES))
 
 @Monthly Expenses
-MONTH_LIST: Monthly
+M: Monthly
   Type | Amount
   Netflix | 99
   Google | 170
   Amazon Prime, 65
-  Sum | !MONTH_SUM:SUM(MONTH_LIST)
+  Sum | !MS:SUM(M:1)`
 
-`
   const [doc, setDoc] = useState<string>(example)
   // run at start
   const handleEditorChange = useCallback((doc: string) => {

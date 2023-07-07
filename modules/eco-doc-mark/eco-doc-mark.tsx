@@ -22,11 +22,13 @@ export interface EcoToken {
   children: EcoToken[]
 }
 
+type TypeEcoMap = EcoMap | null
 export interface EcoMap {
   key: string
   value: string
   children: EcoMap[]
-  parent: EcoMap | null
+  parent: TypeEcoMap
+  group?: number
 }
 
 /**
@@ -50,7 +52,26 @@ export function CreateMap(doc: string): EcoMap {
     'parent': null,
   }
   worker.TraverseTokens(root, map)
+  worker.MananageLists(map)
+  worker.SolveFunctions(map)
+  console.log(worker.symbols)
+  console.log(worker.functions)
   return map
+}
+
+/**
+ *
+ */
+function findMap(children: EcoMap[], key: string, value: string): TypeEcoMap {
+  for (const item of children) {
+    if (item.key === key && item.value === value) return item
+
+    if (item.children) {
+      const desiredNode: TypeEcoMap = findMap(item.children, key, value)
+      if (desiredNode) return desiredNode
+    }
+  }
+  return null
 }
 
 function isNumeric(val: any): boolean {
@@ -112,24 +133,71 @@ function getLineItems(line: string): string[] {
  */
 class EcoDocMark {
   readonly token: EcoToken
+  readonly symbols: Map<string, EcoMap>
+  readonly functions: Map<string, EcoMap>
 
   constructor(token: EcoToken) {
     this.token = token
+    this.symbols = new Map<string, EcoMap>()
+    this.functions = new Map<string, EcoMap>()
   }
 
   /**
    *
    */
-  TraverseTokens(token: EcoToken, map: EcoMap) {
-    for (const child of token.children) {
-      const nmap = {
+  SolveFunctions(map: EcoMap) {
+    const item = findMap(map.children, 'Symbol', 'I')
+    //    console.log('found', item.parent)
+  }
+  /**
+   *
+   */
+  MananageLists(map: EcoMap) {
+    for (const tab of map.children.filter(x => x.key === 'Tab')) {
+      let group = 0
+      let index = 0
+      while (index < tab.children.length) {
+        const item = tab.children[index]
+        if (item.key === 'SymbolRow' && (index + 1) < tab.children.length) {
+          if (tab.children[index + 1].key !== 'Empty') {
+            item.group = group
+            let j = index
+            while (j++ < tab.children.length) {
+              if (tab.children[j].key === 'Empty') {
+                break;
+              } else {
+                tab.children[j].group = group
+              }
+            }
+            group++
+          } else {
+            item.group = group++
+          }
+        }
+        index++
+      }
+    }
+  }
+
+  /**
+   *
+   */
+  TraverseTokens(parent: EcoToken, map: EcoMap) {
+    for (const child of parent.children) {
+
+      const obj = {
         'key': EcoTokenType[child.type],
         'value': child.value ? child.value.toString() : '',
         'children': [],
         'parent': map,
       }
-      map.children.push(nmap)
-      this.TraverseTokens(child, nmap)
+
+      if(child.type === EcoTokenType.Symbol && child.value) {
+        this.symbols.set(child.value.toString(), obj)
+      }
+
+      map.children.push(obj)
+      this.TraverseTokens(child, obj)
     }
   }
 
@@ -139,7 +207,6 @@ class EcoDocMark {
   Parse(doc: string) {
     const lines: string[] = doc.split('\n')
     let hasFoundTab = false
-    let index = 0
 
     let currentToken: TypeEcoToken = this.token
     for (const line of lines) {
@@ -176,23 +243,26 @@ class EcoDocMark {
         }
 
         // Line
-      } else if (line.length > 0 && !line.startsWith('.')) {
-        if (!hasFoundTab) {
-          hasFoundTab = true
-          currentToken = createTabToken(currentToken, 'Start')
-        }
+      } else if (!line.startsWith('.') && !line.startsWith('@')) {
+        if (line.length > 0) {
+          if (!hasFoundTab) {
+            hasFoundTab = true
+            currentToken = createTabToken(currentToken, 'Start')
+          }
 
-        const lineTkn = createToken(EcoTokenType.TextRow, null, currentToken)
-        currentToken?.children.push(lineTkn)
-        const items = getLineItems(line)
-        for (const item of items) {
-          addTokenChild(lineTkn, item)
+          const lineTkn = createToken(EcoTokenType.TextRow, null, currentToken)
+          currentToken?.children.push(lineTkn)
+          const items = getLineItems(line)
+          for (const item of items) {
+            addTokenChild(lineTkn, item)
+          }
+        } else {
+          if (currentToken.type != EcoTokenType.Root) {
+            currentToken?.children.push(createToken(EcoTokenType.Empty, null, currentToken))
+          }
         }
-      } else {
-        currentToken.children.push(createToken(EcoTokenType.Empty, null, currentToken))
       }
-
-      index++
     }
+    currentToken?.children.push(createToken(EcoTokenType.Empty, null, currentToken))
   }
 }
