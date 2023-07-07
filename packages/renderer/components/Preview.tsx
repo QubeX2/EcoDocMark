@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { EcoDocMark } from '../../../modules/eco-doc-mark/eco-doc-mark'
+import { CreateMap } from '../../../modules/eco-doc-mark/eco-doc-mark'
 import Document from '../components/preview/Document'
 import TabList from './preview/TabList'
 import Page from './preview/Page'
@@ -33,8 +33,12 @@ export default function Preview({ doc }: Props) {
   }, [])
 
 const { sections, tabs } =  useMemo(() => {
-    const m = EcoDocMark.CreateMap(doc)
+    const m = CreateMap(doc)
+    const sections: Section[] = [] // pages
+    const tabs: string[] = []
     console.log(m)
+    return { sections, tabs }
+    /*
     const tabItems = m.children.filter(x => x.key === 'Tab')
     let tabIndex = 0
     const tabs = [...(m.children.length > 1 && m.children[0].key !== 'Tab' ? [''] : []), ...tabItems.map(t => t.value)]
@@ -90,9 +94,12 @@ const { sections, tabs } =  useMemo(() => {
     }
     console.log(sections)
     return { sections, tabs }
+  */
   }, [doc])
 
   return (
+    <>
+    { /*
     <Document>
       <TabList tabs={tabs} selectedIndex={selectedTabIndex} onChange={handleTabClick} />
       {Array.from({ length: tabs.length }, (_, i) => i).map(x => (
@@ -107,5 +114,7 @@ const { sections, tabs } =  useMemo(() => {
         </Page>
       ))}
     </Document>
+    */ }
+  </>
   )
 }

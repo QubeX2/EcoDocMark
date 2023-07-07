@@ -1,14 +1,15 @@
 export enum EcoTokenType {
+  Empty = 0,
   Root = 1,
   Symbol = 2,
   Number = 3,
   Text = 4,
   Date = 5,
-  List = 6,
-  ListHeader = 7,
-  ListRow = 8,
-  Tab = 9,
-  Function = 10,
+  SymbolRow = 6,
+  TextRow = 7,
+  Tab = 8,
+  Function = 9,
+  Config = 10,
 }
 
 type TypeEcoToken = EcoToken | null
@@ -17,7 +18,6 @@ type TypeEcoTokenValue = string | null | number
 export interface EcoToken {
   type: EcoTokenType
   value: TypeEcoTokenValue
-  first: TypeEcoToken
   parent: TypeEcoToken
   children: EcoToken[]
 }
@@ -29,40 +29,99 @@ export interface EcoMap {
   parent: EcoMap | null
 }
 
-export class EcoDocMark {
+/**
+ *
+ */
+export function CreateMap(doc: string): EcoMap {
+  const root: EcoToken = {
+    type: EcoTokenType.Root,
+    value: null,
+    parent: null,
+    children: [],
+  }
+
+  const worker = new EcoDocMark(root)
+  worker.Parse(doc)
+
+  const map: EcoMap = {
+    'key': EcoTokenType[EcoTokenType.Root],
+    'value': '',
+    'children': [],
+    'parent': null,
+  }
+  worker.TraverseTokens(root, map)
+  return map
+}
+
+function isNumeric(val: any): boolean {
+  return !(val instanceof Array) && (val - parseFloat(val) + 1) >= 0;
+}
+
+function createToken(
+  type: EcoTokenType,
+  value: TypeEcoTokenValue,
+  parent: TypeEcoToken,
+): EcoToken {
+  return { type: type, value: value, parent: parent, children: [] }
+}
+
+function getClosestToken(token: TypeEcoToken, type: EcoTokenType): TypeEcoToken {
+  while (token) {
+    if (token.type === type) {
+      return token
+    } else if (token.type === EcoTokenType.Root) {
+      return token
+    }
+    token = token.parent
+  }
+  return null
+}
+
+/**
+ *
+ */
+function addTokenChild(parent: TypeEcoToken, value: string) {
+  if (parent === null) return
+
+  if (isNumeric(value)) {
+    parent.children.push(createToken(EcoTokenType.Number, Number(value), parent))
+  } else if (value.startsWith('!')) {
+    parent.children.push(createToken(EcoTokenType.Function, value, parent))
+  } else {
+    parent.children.push(createToken(EcoTokenType.Text, value, parent))
+  }
+}
+
+/**
+ *
+ */
+function createTabToken(parent: TypeEcoToken, value: string) {
+  const token = createToken(EcoTokenType.Tab, value, parent)
+  parent?.children.push(token)
+  return token
+}
+/**
+ *
+ */
+function getLineItems(line: string): string[] {
+  return line.split('|').map((t => t.trim()))
+}
+
+/**
+ *
+ */
+class EcoDocMark {
   readonly token: EcoToken
 
   constructor(token: EcoToken) {
     this.token = token
   }
 
-  private static CreateToken(
-    type: EcoTokenType,
-    value: TypeEcoTokenValue,
-    first: TypeEcoToken,
-    parent: TypeEcoToken,
-  ): EcoToken {
-    return { type: type, value: value, first: first, parent: parent, children: [] }
-  }
-
-  private static Closest(token: TypeEcoToken, type: EcoTokenType): TypeEcoToken {
-    while (token) {
-      if (token.type === type) {
-        return token
-      } else if (token.type === EcoTokenType.Root) {
-        return token
-      }
-      token = token.parent
-    }
-    return null
-  }
-
   /**
    *
    */
-  private TraverseToken(token: EcoToken, map: EcoMap) {
+  TraverseTokens(token: EcoToken, map: EcoMap) {
     for (const child of token.children) {
-      if (child.type === EcoTokenType.Function) return
       const nmap = {
         'key': EcoTokenType[child.type],
         'value': child.value ? child.value.toString() : '',
@@ -70,246 +129,70 @@ export class EcoDocMark {
         'parent': map,
       }
       map.children.push(nmap)
-      this.TraverseToken(child, nmap)
+      this.TraverseTokens(child, nmap)
     }
   }
 
   /**
    *
    */
-  static CreateMap(doc: string): EcoMap {
-    const root: EcoToken = {
-      type: EcoTokenType.Root,
-      value: null,
-      first: null,
-      parent: null,
-      children: [],
-    }
+  Parse(doc: string) {
+    const lines: string[] = doc.split('\n')
+    let hasFoundTab = false
+    let index = 0
 
-    const worker = new EcoDocMark(root)
-    worker.Parse(doc)
-
-    const map: EcoMap = {
-      'key': EcoTokenType[EcoTokenType.Root],
-      'value': '',
-      'children': [],
-      'parent': null,
-    }
-    worker.TraverseToken(root, map)
-    return map
-  }
-
-  /**
-   *
-   */
-  private Parse(doc: string) {
-    const config = new Map<string, string>()
-    // const errors = new Map<number, string>()
-    const validSymbolChars = 'ABCDEFGHIJKLMNOPQRSTUVXYZ0123456789'
-    // const validNumberChars = '0123456789.'
-    const endingChars = '{\'%=!\n]('
-    let current: TypeEcoToken = this.token
-
-    let i = 0
-    while (i < doc.length) {
-      const c = doc.charAt(i)
-      // console.log('incoming char', c)
-      switch (c) {
-        // .config-{name}
-        case '.':
-          {
-            if (current && current.type === EcoTokenType.Root) {
-              let configFragment = ''
-              while (i++ < doc.length && doc.charAt(i) !== '\n') {
-                configFragment += doc.charAt(i)
-              }
-              const configItem = configFragment.split(':').map(t => t.trim())
-              if (configItem.length === 2) {
-                config.set(configItem[0], configItem[1])
-              }
-            }
-          }
-          break
-
-        // @TAB
-        case '@':
-          {
-            if (current && current.type === EcoTokenType.Tab) {
-              current = current.parent
-            }
-            if (current && current.type === EcoTokenType.Root) {
-              let tab = ''
-              while (i++ < doc.length && !endingChars.includes(doc.charAt(i))) {
-                tab += doc.charAt(i)
-              }
-              i--
-              if (tab.length && current) {
-                const token = EcoDocMark.CreateToken(EcoTokenType.Tab, tab, this.token, current)
-                current.children.push(token)
-                current = token
-              }
-            }
-          }
-          break
-
-        // :SYMBOL
-        case ':':
-          {
-            let symbol = ''
-            while (i++ < doc.length && validSymbolChars.includes(doc.charAt(i))) {
-              symbol += doc.charAt(i)
-            }
-            i--
-            if (symbol.length) {
-              if (current && (current.type === EcoTokenType.Root || current.type === EcoTokenType.Tab)) {
-                const token = EcoDocMark.CreateToken(
-                  EcoTokenType.Symbol,
-                  symbol,
-                  this.token,
-                  current === null ? this.token : current,
-                )
-                current.children.push(token)
-                current = token
-              } else if (current) {
-                current.children.push(
-                  EcoDocMark.CreateToken(EcoTokenType.Symbol, symbol, this.token, current),
-                )
-              }
-            }
-          }
-          break
-
-        // #TEXT
-        case '%':
-        case '=':
-        case '\'':
-          {
-            if (current) {
-              let text = ''
-              while (i++ < doc.length && !endingChars.includes(doc.charAt(i))) {
-                text += doc.charAt(i)
-              }
-              i--
-              if (
-                text.length &&
-                [
-                  EcoTokenType.Symbol,
-                  EcoTokenType.ListHeader,
-                  EcoTokenType.List,
-                  EcoTokenType.ListRow,
-                ].includes(current.type)
-              ) {
-                if (current.type === EcoTokenType.List) {
-                  const token = EcoDocMark.CreateToken(EcoTokenType.ListRow, null, this.token, current)
-                  current.children.push(token)
-                  current = token
-                }
-                let token: TypeEcoToken = null
-                if (c === '%') {
-                  token = EcoDocMark.CreateToken(EcoTokenType.Date, text, this.token, current)
-                } else if (c === '\'') {
-                  token = EcoDocMark.CreateToken(EcoTokenType.Text, text, this.token, current)
-                } else {
-                  token = EcoDocMark.CreateToken(EcoTokenType.Number, text, this.token, current)
-                }
-
-                if (token) {
-                  current.children.push(token)
-                }
-              }
-            }
-          }
-          break
-
-        case '!':
-          {
-            if (current) {
-              let func = ''
-              while (i++ < doc.length && !endingChars.includes(doc.charAt(i))) {
-                func += doc.charAt(i)
-              }
-              i--
-              if (func.length) {
-                const token = EcoDocMark.CreateToken(EcoTokenType.Function, func, this.token, current)
-                current.children.push(token)
-                current = token
-              }
-            }
-          }
-          break
-
-        /*
-        case '(':
-          {
-            if (i < doc.length && current && current.type === EcoTokenType.Function) {
-            }
-          }
-          break; */
-
-        case ')':
-          {
-            if (current && current.type === EcoTokenType.Function) {
-              current = current.parent
-            }
-          }
-          break
-
-        // LIST-START
-        case '{':
-          {
-            if (current && current.type === EcoTokenType.Symbol) {
-              const token = EcoDocMark.CreateToken(EcoTokenType.List, null, this.token, current)
-              current.children.push(token)
-              current = token
-            }
-          }
-          break
-
-        // LIST-END, FUNCTION-END
-        case '}':
-          {
-            if (current && current.type === EcoTokenType.List) {
-              let token = EcoDocMark.Closest(current, EcoTokenType.Tab)
-              if (!token) {
-                token = EcoDocMark.Closest(current, EcoTokenType.Root)
-              }
-              current = token
-            }
-          }
-          break
-
-        case '\n':
-          {
-            if (current && [EcoTokenType.Symbol, EcoTokenType.ListRow].includes(current.type)) {
-              current = current.parent
-            }
-          }
-          break
-
-        // LIST-HEADER
-        case '[':
-          {
-            if (current && current.type === EcoTokenType.List) {
-              const token = EcoDocMark.CreateToken(EcoTokenType.ListHeader, null, this.token, current)
-              current.children.push(token)
-              current = token
-            }
-          }
-          break
-
-        // LIST-HEADER-END
-        case ']':
-          {
-            if (current && current.type === EcoTokenType.ListHeader) {
-              current = current.parent
-            }
-          }
-          break
+    let currentToken: TypeEcoToken = this.token
+    for (const line of lines) {
+      // Config
+      if (/^\.[a-z\-:]+/.test(line)) {
+        currentToken?.children.push(createToken(EcoTokenType.Config, line, currentToken))
       }
-      // console.log('type', current ? EcoTokenType[current.type] : '')
-      // console.log('exit char', doc.charAt(i))
-      i++
+
+      // Tab
+      if (/^@.+?/.test(line)) {
+        hasFoundTab = true
+
+        const tab = line.trim().substring(1)
+        // add to root
+        currentToken = getClosestToken(currentToken, EcoTokenType.Root)
+        currentToken = createTabToken(currentToken, tab)
+      }
+
+      // Symbol
+      if (/^[A-Z_0-9]+:/.test(line)) {
+        if (!hasFoundTab) {
+          hasFoundTab = true
+          currentToken = createTabToken(currentToken, 'Start')
+        }
+
+        const symbol = line.substring(0, line.indexOf(':'))
+        // add to tab
+        const lineTkn = createToken(EcoTokenType.SymbolRow, null, currentToken)
+        lineTkn.children.push(createToken(EcoTokenType.Symbol, symbol, currentToken))
+        currentToken?.children.push(lineTkn)
+        const items = getLineItems(line.substring(line.indexOf(':') + 1))
+        for (const item of items) {
+          addTokenChild(lineTkn, item)
+        }
+
+        // Line
+      } else if (line.length > 0 && !line.startsWith('.')) {
+        if (!hasFoundTab) {
+          hasFoundTab = true
+          currentToken = createTabToken(currentToken, 'Start')
+        }
+
+        const lineTkn = createToken(EcoTokenType.TextRow, null, currentToken)
+        currentToken?.children.push(lineTkn)
+        const items = getLineItems(line)
+        for (const item of items) {
+          addTokenChild(lineTkn, item)
+        }
+      } else {
+        currentToken.children.push(createToken(EcoTokenType.Empty, null, currentToken))
+      }
+
+      index++
     }
-    console.log(this.token)
   }
 }

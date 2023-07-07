@@ -6,34 +6,34 @@ import Preview from '../components/Preview'
 import Toolbar from '../components/Toolbar'
 
 export default function App() {
-  const example = `.currency-suffix: kr
+  const example = `
+.currency-suffix: kr
 
-:I 'Income {
-  ['Type 'Amount]
-  'Income =25500
-  'Pension =3650
-  !ADD(:I)
-}
+INC_LIST: Income
+  Type    | Amount
+  Income  | 2500
+  Pension | 3650
+  Sum     | !INC_SUM:SUM(INC_LIST)
 
-:E 'Expenses {
-  ['Type 'Amount]
-  'Personal Trainer =1600
-  'Rent =4500
-  'Car Loan =1900
-  'Monthly !SUM(M)
-  !ADD(:E)
-}
+EXP_LIST: Expenses
+  Type | Amount
+  PT | 1600
+  Rent | 4500
+  Car Loan | 1900
+  Montly | !VAL(MONTH_SUM)
+  Sum | !EXP_SUM:SUM(EXP_LIST)
 
-:S 'Saldo_ !SUB(!ADD(:I),!ADD(:E))_
+SALDO: Saldo | !SUB(!VAL(INC_SUM) | !VAL(EXP_SUM))
 
-@Montly Expenses
-:M 'Monthly {
-  ['Type 'Amount]
-  'Netflix =99
-  'Google =170
-  'Amazon Prime =65
-  !ADD(:M)
-}`
+@Monthly Expenses
+MONTH_LIST: Monthly
+  Type | Amount
+  Netflix | 99
+  Google | 170
+  Amazon Prime, 65
+  Sum | !MONTH_SUM:SUM(MONTH_LIST)
+
+`
   const [doc, setDoc] = useState<string>(example)
   // run at start
   const handleEditorChange = useCallback((doc: string) => {
