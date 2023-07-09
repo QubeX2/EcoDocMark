@@ -76,7 +76,7 @@ export default function TokenStream(input: IStream) {
     let str = ''
     while(!is_end_of_string(ch)) {
       str += ch
-      const ch = input.next()
+      ch = input.next()
     }
     return { type: ETokenType.String, value: str }
   }
