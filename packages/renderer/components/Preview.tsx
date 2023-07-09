@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { CreateMap } from '../../../modules/eco-doc-mark/eco-doc-mark'
+import { CreateMap } from '../../../modules/eco-docmark/eco-docmark'
 import Document from '../components/preview/Document'
 import TabList from './preview/TabList'
 import Page from './preview/Page'

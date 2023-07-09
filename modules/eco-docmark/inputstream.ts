@@ -1,0 +1,43 @@
+/**
+ *
+ */
+export interface IStream {
+  next: () => string
+  peek: () => string
+  eof: () => boolean
+  croak: () => void
+}
+export default function InputStream(input: string) {
+  let pos = 0, line = 0, col = 0;
+
+  return {
+    next: next,
+    peek: peek,
+    eof: eof,
+    croak: croak
+  } as IStream
+
+  function next():string {
+    const ch = input.charAt(pos++)
+    if(ch === '\n') {
+      line++
+      col = 0
+    } else {
+      col++
+    }
+    return ch
+  }
+
+  function peek(): string {
+    return input.charAt(pos)
+  }
+
+  function eof(): boolean {
+    //return peek() === ''
+    return !(pos < input.length)
+  }
+
+  function croak(msg: string) {
+    throw new Error(`${msg} (${line}:${col})`)
+  }
+}
