@@ -4,6 +4,7 @@
 export interface IStream {
   next: () => string
   peek: () => string
+  current: () => string
   eof: () => boolean
   croak: () => void
 }
@@ -13,6 +14,7 @@ export default function InputStream(input: string) {
   return {
     next: next,
     peek: peek,
+    current: current,
     eof: eof,
     croak: croak
   } as IStream
@@ -28,6 +30,9 @@ export default function InputStream(input: string) {
     return ch
   }
 
+  function current(): string {
+    return (pos - 1) >= 0 ? input.charAt(pos - 1) : ''
+  }
   function peek(): string {
     return input.charAt(pos)
   }

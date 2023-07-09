@@ -1,23 +1,21 @@
 import type { IStream } from "./inputstream";
 
-enum ETokenType {
-  None,
-  Num,
-  String,
-}
-
-type TAlphaNum = string | number | null
-
+type TAlphaNum = string | number | null
+type TToken = IToken | null
 interface IToken {
-  type: ETokenType
+  type: string
   value: TAlphaNum
+  args?: IToken[]
 }
 
 export default function TokenStream(input: IStream) {
-  let current = null
+  let current: TToken = null
   let keywords: string = " SUM ADD SUB IF "
   return {
-
+    next: next,
+    peek: peek,
+    eof: eof,
+    croak: input.croak
   }
 
   // IS
@@ -39,20 +37,57 @@ export default function TokenStream(input: IStream) {
   function is_symbol_start(ch: string): boolean {
     return /[A-Z]/.test(ch)
   }
-  function is_symbol(ch: string): boolean {
+  function is_id(ch: string): boolean {
     return is_symbol_start(ch) || ch === '#'
   }
-  function is_end_of_string(ch: string): boolean {
-    return "|#\n".indexOf(ch) >= 0
+  function is_eos(ch: string): boolean {
+    return "{|#\n".indexOf(ch) >= 0
+  }
+  function is_config_start(ch: string): boolean {
+    return ch === '.'
+  }
+  function is_config(ch: string): boolean {
+    return is_config_start(ch) || /[a-z\-:]+/.test(ch)
+  }
+  function is_eol(ch: string): boolean {
+    return ch === '\n'
+  }
+  function is_punc(ch: string): boolean {
+    return ",;{}".indexOf(ch) >= 0
   }
 
   // READ
+  function read_next() {
+    read_while(is_whitespace)
+    if (input.eof()) return null
+    let ch = input.peek()
+    if (is_digit(ch)) return read_number()
+    if (is_config_start(ch)) return read_config()
+    if (is_id(ch)) {
+      let o = read_string()
+      return input.peek() === '#' ? { type: 'symbol', value: o.value + input.next() } : o
+    }
+    if (is_punc(ch)) { return { type: 'punc', value: input.next() } }
+    input.croak(`Can't handle character: ${ch}`)
+    return null
+  }
+
   function read_while(predicate: (arg: string) => boolean) {
     let str = ''
     while (!input.eof() && predicate(input.peek())) {
       str += input.next()
     }
     return str
+  }
+
+  function read_config(): IToken {
+    let str = ''
+    while (!input.eof()) {
+      let ch = input.next()
+      str += ch
+      if(!is_config(input.peek())) break
+    }
+    return { type: 'config', value: str, args: [read_string()] }
   }
 
   function read_number(): IToken {
@@ -68,16 +103,30 @@ export default function TokenStream(input: IStream) {
       }
       return is_digit(ch)
     })
-    return { type: ETokenType.Num, value: parseFloat(number) }
+    return { type: 'number', value: parseFloat(number) }
   }
 
   function read_string(): IToken {
-    let ch = input.next()
     let str = ''
-    while(!is_end_of_string(ch)) {
+    while (!input.eof()) {
+      let ch = input.next()
       str += ch
-      ch = input.next()
+      if(is_eos(input.peek())) break
     }
-    return { type: ETokenType.String, value: str }
+    return { type: 'string', value: str.trim() }
+  }
+
+  function peek() {
+    return current || (current = read_next())
+  }
+
+  function next() {
+    let tok = current
+    current = null
+    return tok || read_next()
+  }
+
+  function eof() {
+    return peek() === null
   }
 }
