@@ -1,6 +1,7 @@
 import { isDate } from "moment"
 import InputStream from "./inputstream";
 import TokenStream from "./tokenstream";
+import Parse from "./parser";
 
 /**
  *
@@ -8,11 +9,9 @@ import TokenStream from "./tokenstream";
 export function CreateMap(doc: string) {
   let is = InputStream(doc)
   let ts = TokenStream(is)
-
-  while(!ts.eof()) {
-    let ast = ts.next()
-    console.log(ast)
-  }
+  let prog = Parse(ts)
+  console.log(prog)
+  console.log('==========================================')
 }
 
 function isNumeric(val: any): boolean {

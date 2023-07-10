@@ -8,6 +8,7 @@ export interface IStream {
   eof: () => boolean
   croak: () => void
 }
+
 export default function InputStream(input: string) {
   let pos = 0, line = 0, col = 0;
 

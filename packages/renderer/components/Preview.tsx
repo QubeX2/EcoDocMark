@@ -36,7 +36,7 @@ const { sections, tabs } =  useMemo(() => {
     const m = CreateMap(doc)
     const sections: Section[] = [] // pages
     const tabs: string[] = []
-    console.log(m)
+    // console.log(m)
     return { sections, tabs }
     /*
     const tabItems = m.children.filter(x => x.key === 'Tab')
