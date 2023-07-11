@@ -7,6 +7,7 @@ type TAstObject = IAbstractSyntaxTree | null
 interface IAbstractSyntaxTree {
   type: string
   value?: TAstValue
+  call?: TAstObject
   func?: TAstObject
   args?: TAstObject[]
   cond?: TAstObject
@@ -29,21 +30,13 @@ export default function Parse(input: ITokenStream) {
       return tok !== null && tok.type === 'punc' && tok.value as string === ch
     }
   }
-  function is_newline(): boolean {
+  function is_type(type: string): boolean {
     let tok = input.peek()
-    return tok !== null && tok.type === 'newline'
-  }
-  function is_config(): boolean {
-    let tok = input.peek()
-    return tok !== null && tok.type === 'config'
+    return tok !== null && tok.type === type
   }
   function is_value(): boolean {
     let tok = input.peek()
     return tok !== null && ['string', 'boolean', 'number'].includes(tok.type)
-  }
-  function is_symbol(): boolean {
-    let tok = input.peek()
-    return tok !== null && tok.type === 'symbol'
   }
 
   function parse_config(): TAstObject {
@@ -67,26 +60,29 @@ export default function Parse(input: ITokenStream) {
     return null
   }
 
-  function parse_cells():TAstObject[] {
-    const cells:TAstObject[] = []
-    console.log(input.peek())
+  function parse_cells(): TAstObject[] {
+    const cells: TAstObject[] = []
+    while (!is_type('eol')) {
+      if (is_punc(',')) {
+        input.next()
+      } else {
+        cells.push(parse_expression())
+      }
+    }
     return cells
   }
 
   function parse_rows(): TAstObject[] {
-    const rows:TAstObject[] = []
-    while(!is_punc('}')) {
-      let tok = input.next()
-      if(tok !== null) {
-        rows.push({ type: 'row', cells: parse_cells() })
-      }
+    const rows: TAstObject[] = []
+    while (!is_punc('}')) {
+      rows.push({ type: 'row', cells: parse_cells() })
     }
 
     return rows
   }
 
   function parse_list(): TAstObject {
-    while(is_punc() || is_newline()) {
+    while (is_punc() || is_type('eol')) {
       input.next()
     }
     return { type: 'list', rows: parse_rows() }
@@ -100,26 +96,49 @@ export default function Parse(input: ITokenStream) {
       if (is_punc('{')) {
         input.next() // consume {
         return { type: 'symbol', value: tok.value, list: parse_list() }
-      } else {
+      } else if (is_type('keyword')) {
+        return { type: 'symbol', prog: [parse_expression()] }
+      }
+    }
+    return null
+  }
 
+  function parse_args(): TAstObject[] {
+    let args:TAstObject[] = []
+    return args
+  }
+
+  function parse_func(): TAstObject {
+    let tok = input.next()
+    if (tok !== null) {
+      return {
+        type: 'call',
+        func: {
+          type: 'func',
+          value: tok.value
+        },
+        args: null //parse_args()
       }
     }
     return null
   }
 
   function parse_expression(): TAstObject {
-    if (is_newline()) {
+    if (is_type('eol')) {
       input.next()
       return null
     }
-    if (is_config()) {
+    if (is_type('config')) {
       return parse_config()
     }
     if (is_value()) {
       return parse_value()
     }
-    if (is_symbol()) {
+    if (is_type('symbol')) {
       return parse_symbol()
+    }
+    if (is_type('keyword')) {
+      return parse_func()
     }
 
     input.next();

@@ -71,7 +71,7 @@ export default function TokenStream(input: IStream) {
     read_while(is_whitespace)
     if (input.eof()) return null
     let ch = input.peek()
-    if (is_eol(ch)) return { type: 'newline', value: input.next() }
+    if (is_eol(ch)) return { type: 'eol', value: input.next() }
     if (is_digit(ch)) return read_number()
     if (is_config_start(ch)) return read_config()
     if (is_symbol(ch) || is_string(ch)) {
