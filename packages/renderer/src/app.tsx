@@ -25,6 +25,7 @@ E: {
   Car Loan, 1900
   Montly, !VAL(MS:)
   Sum, ES: !SUM(E:)
+}
 
 b^Saldo, !SUB(!VAL(IS:);!VAL(ES:))
 

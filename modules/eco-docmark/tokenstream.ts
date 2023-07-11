@@ -7,7 +7,7 @@ export interface ITokenStream {
   next: () => TToken
   peek: () => TToken
   eof: () => boolean
-  croak: () => void
+  croak: (msg: string) => void
 }
 
 export interface IToken {
@@ -105,6 +105,7 @@ export default function TokenStream(input: IStream) {
 
   function read_config(): IToken {
     let str = ''
+    input.next() // skip dot
     while (!input.eof()) {
       let ch = input.next()
       str += ch
@@ -146,7 +147,11 @@ export default function TokenStream(input: IStream) {
   function next(): TToken {
     let tok = current
     current = null
-    return tok || read_next()
+
+    tok = tok || read_next()
+    console.log(tok)
+    return tok
+    //return tok || read_next()
   }
 
   function eof(): boolean {

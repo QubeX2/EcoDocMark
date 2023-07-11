@@ -6,7 +6,7 @@ export interface IStream {
   peek: () => string
   current: () => string
   eof: () => boolean
-  croak: () => void
+  croak: (msg: string) => void
 }
 
 export default function InputStream(input: string) {
