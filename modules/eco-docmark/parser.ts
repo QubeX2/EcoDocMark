@@ -90,6 +90,7 @@ export default function Parse(input: ITokenStream) {
 
   function parse_symbol(): TAstObject {
     let tok = input.next()
+    /*
     if (tok != null && is_punc(':')) {
       input.next()
       // list
@@ -99,7 +100,7 @@ export default function Parse(input: ITokenStream) {
       } else if (is_type('keyword')) {
         return { type: 'symbol', prog: [parse_expression()] }
       }
-    }
+    } */
     return null
   }
 
@@ -110,6 +111,8 @@ export default function Parse(input: ITokenStream) {
 
   function parse_func(): TAstObject {
     let tok = input.next()
+    console.log('parse_func: ', tok)
+    /*
     if (tok !== null) {
       return {
         type: 'call',
@@ -117,9 +120,9 @@ export default function Parse(input: ITokenStream) {
           type: 'func',
           value: tok.value
         },
-        args: null //parse_args()
+        args: [] //parse_args()
       }
-    }
+    } */
     return null
   }
 
@@ -137,9 +140,10 @@ export default function Parse(input: ITokenStream) {
     if (is_type('symbol')) {
       return parse_symbol()
     }
+    /*
     if (is_type('keyword')) {
       return parse_func()
-    }
+    } */
 
     input.next();
     return null
