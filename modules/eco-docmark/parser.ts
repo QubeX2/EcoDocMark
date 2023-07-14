@@ -92,6 +92,7 @@ export default function Parse(input: ITokenStream) {
 
   function parse_symbol(): TAstObject {
     const tok = input.next();
+    console.log('parse_symbol', tok);
     if (tok != null && is_punc(':')) {
       input.next();
       // list
@@ -117,13 +118,19 @@ export default function Parse(input: ITokenStream) {
       input.next();
       while (true) {
         const _a1 = input.peek();
-        while (is_punc()) {
+        if (is_punc(')')) {
           input.next();
-          continue;
+          const _a2 = input.peek();
+          if (is_punc(';')) {
+            input.next();
+            const _a3 = input.peek();
+          } else {
+            return args;
+          }
         }
-        const _a2 = input.peek();
         if (is_type('keyword') || is_type('symbol')) {
           args.push(parse_expression());
+          console.log(JSON.stringify(args, null, 2));
         } else {
           return args;
         }
