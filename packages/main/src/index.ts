@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import './security-restrictions';
-import {restoreOrCreateWindow} from '/@/mainWindow';
+import { restoreOrCreateWindow } from '/@/mainWindow';
+import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-assembler'
 /**
  * Prevent electron from running multiple instances.
  */
@@ -36,8 +37,12 @@ app.on('activate', restoreOrCreateWindow);
 
 app
   .whenReady()
-  .then(restoreOrCreateWindow)
-  .catch(e => console.error('Failed create window:', e));
+  .then(() => {
+    installExtension(REACT_DEVELOPER_TOOLS)
+      .then((name) => console.log(`Added extension: ${name}`))
+      .catch((err) => console.error(`An error occured: ${err}`))
+    restoreOrCreateWindow()
+  }).catch(e => console.error('Failed create window:', e));
 
 /**
  * Install Vue.js or any other extension in development mode only.
@@ -61,6 +66,6 @@ if (import.meta.env.PROD) {
   app
     .whenReady()
     .then(() => import('electron-updater'))
-    .then(({autoUpdater}) => autoUpdater.checkForUpdatesAndNotify())
+    .then(({ autoUpdater }) => autoUpdater.checkForUpdatesAndNotify())
     .catch(e => console.error('Failed check updates:', e));
 }

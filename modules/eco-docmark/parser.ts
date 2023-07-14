@@ -76,8 +76,8 @@ export default function Parse(input: ITokenStream) {
     const rows: TAstObject[] = []
     while (!is_punc('}')) {
       rows.push({ type: 'row', cells: parse_cells() })
+      input.next()
     }
-
     return rows
   }
 
@@ -90,7 +90,6 @@ export default function Parse(input: ITokenStream) {
 
   function parse_symbol(): TAstObject {
     let tok = input.next()
-    /*
     if (tok != null && is_punc(':')) {
       input.next()
       // list
@@ -98,14 +97,14 @@ export default function Parse(input: ITokenStream) {
         input.next() // consume {
         return { type: 'symbol', value: tok.value, list: parse_list() }
       } else if (is_type('keyword')) {
-        return { type: 'symbol', prog: [parse_expression()] }
+        //return { type: 'symbol', prog: [parse_expression()] }
       }
-    } */
+    }
     return null
   }
 
   function parse_args(): TAstObject[] {
-    let args:TAstObject[] = []
+    let args: TAstObject[] = []
     return args
   }
 
@@ -140,11 +139,9 @@ export default function Parse(input: ITokenStream) {
     if (is_type('symbol')) {
       return parse_symbol()
     }
-    /*
     if (is_type('keyword')) {
-      return parse_func()
-    } */
-
+      //return parse_func()
+    }
     input.next();
     return null
   }

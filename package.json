@@ -36,6 +36,7 @@
     "cross-env": "7.0.3",
     "electron": "20.2.0",
     "electron-builder": "23.3.3",
+    "electron-devtools-assembler": "^1.2.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",
     "happy-dom": "6.0.4",
