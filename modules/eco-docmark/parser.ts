@@ -62,6 +62,7 @@ export default function Parse(input: ITokenStream) {
   function parse_cells(): TAstObject[] {
     const cells: TAstObject[] = [];
     while (!is_type('eol')) {
+      const _a1 = input.peek();
       if (is_punc(',')) {
         input.next();
       } else {
@@ -92,7 +93,6 @@ export default function Parse(input: ITokenStream) {
 
   function parse_symbol(): TAstObject {
     const tok = input.next();
-    console.log('parse_symbol', tok);
     if (tok != null && is_punc(':')) {
       input.next();
       // list
@@ -105,7 +105,6 @@ export default function Parse(input: ITokenStream) {
         if (is_punc()) {
           return null;
         }
-        console.log('PEEK_SYM', input.peek());
         return {type: 'symbol', value: tok.value, child: parse_expression()};
       }
     }
@@ -114,34 +113,11 @@ export default function Parse(input: ITokenStream) {
 
   function parse_args(): TAstObject[] {
     const args: TAstObject[] = [];
-    if (is_punc('(')) {
-      input.next();
-      while (true) {
-        const _a1 = input.peek();
-        if (is_punc(')')) {
-          input.next();
-          const _a2 = input.peek();
-          if (is_punc(';')) {
-            input.next();
-            const _a3 = input.peek();
-          } else {
-            return args;
-          }
-        }
-        if (is_type('keyword') || is_type('symbol')) {
-          args.push(parse_expression());
-          console.log(JSON.stringify(args, null, 2));
-        } else {
-          return args;
-        }
-      }
-    }
     return args;
   }
 
   function parse_func(): TAstObject {
     const tok = input.next();
-    console.log('parse_func: ', tok);
     if (tok !== null) {
       return {
         type: 'call',
@@ -167,7 +143,6 @@ export default function Parse(input: ITokenStream) {
       return parse_value();
     }
     if (is_type('symbol')) {
-      console.log('IS SYMBOL');
       return parse_symbol();
     }
     if (is_type('keyword')) {

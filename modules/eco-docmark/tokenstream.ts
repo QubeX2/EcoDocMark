@@ -149,7 +149,7 @@ export default function TokenStream(input: IStream) {
     current = null;
 
     tok = tok || read_next();
-    console.log(tok);
+    // console.log(tok);
     return tok;
     // return tok || read_next()
   }
